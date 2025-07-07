@@ -20,6 +20,18 @@ services:
       timeout: 5s
       retries: 5
 
+  # Frontend UI (React)
+  frontend-react:
+    container_name: react_ui
+    build:
+      context: ./frontend
+    networks:
+      - ai_music_net
+    ports:
+      - "3000:80" # Map host port 3000 to container's port 80 (Nginx default)
+    depends_on:
+      - job-orchestrator-service # Frontend needs the orchestrator API
+
   # Prompt Parser Microservice (FastAPI)
   prompt-parser-service:
     container_name: prompt-parser
