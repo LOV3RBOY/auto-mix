@@ -1,0 +1,5 @@
+pytest
+requests
+scipy
+soundfile
+flake8

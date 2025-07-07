@@ -1,0 +1,131 @@
+# Docker Compose file for the AI Music Production Assistant
+# Version 3.8 is a modern and stable choice.
+version: "3.8"
+
+services:
+  # Redis service for Celery message broker and results backend.
+  redis:
+    image: "redis:7-alpine"
+    container_name: redis
+    networks:
+      - ai_music_net
+    ports:
+      # Expose Redis port to the host for debugging purposes if needed.
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Prompt Parser Microservice (FastAPI)
+  prompt-parser-service:
+    container_name: prompt-parser
+    # Build from the Dockerfile in the specified directory.
+    build:
+      context: ./prompt-parser-service
+    networks:
+      - ai_music_net
+    # No ports exposed to the host; communication is internal via the shared network.
+
+  # Style Analysis Microservice (FastAPI)
+  style-analysis-service:
+    container_name: style-analysis
+    build:
+      context: ./style-analysis-service
+    networks:
+      - ai_music_net
+
+  # Sound Generation Microservice (FastAPI Mock)
+  sound-generation-service:
+    container_name: sound-generation
+    build:
+      context: ./sound-generation-service
+    networks:
+      - ai_music_net
+    volumes:
+      # This service writes stems to this shared volume.
+      - stems_data:/stems
+
+  # Mixing & Mastering Microservice (FastAPI Mock)
+  mixing-mastering-service:
+    container_name: mixing-mastering
+    build:
+      context: ./mixing-mastering-service
+    networks:
+      - ai_music_net
+    volumes:
+      # Mounts the shared volume to read stems and write the final track.
+      - stems_data:/stems
+
+  # Job Orchestrator API (FastAPI)
+  # This is the main entry point for the system.
+  job-orchestrator-service:
+    container_name: job-orchestrator
+    build:
+      context: ./job-orchestrator-service
+    ports:
+      # Expose port 8000 to the host for the CLI client and tests to connect.
+      - "8000:8000"
+    networks:
+      - ai_music_net
+    environment:
+      # Environment variables for service discovery and configuration.
+      - REDIS_URL=redis://redis:6379/0
+      - PROMPT_PARSER_URL=http://prompt-parser:8000/api/v1/parse
+      - STYLE_ANALYSIS_URL=http://style-analysis:8000/analyze/
+      - SOUND_GENERATION_URL=http://sound-generation:8000/generate
+      - MIXING_MASTERING_URL=http://mixing-mastering:8000/process
+    depends_on:
+      redis:
+        condition: service_healthy
+      prompt-parser-service:
+        condition: service_started
+      style-analysis-service:
+        condition: service_started
+      sound-generation-service:
+        condition: service_started
+      mixing-mastering-service:
+        condition: service_started
+
+  # Celery Worker for the Job Orchestrator
+  # This service executes the background tasks.
+  worker:
+    container_name: orchestrator-worker
+    build:
+      # Shares the same build context as the orchestrator API.
+      context: ./job-orchestrator-service
+    command: celery -A main.celery_app worker --loglevel=info
+    networks:
+      - ai_music_net
+    volumes:
+      # Needs access to the shared volume to pass file paths to the mixing service.
+      - stems_data:/stems
+    environment:
+      # Shares the same environment configuration.
+      - REDIS_URL=redis://redis:6379/0
+      - PROMPT_PARSER_URL=http://prompt-parser:8000/api/v1/parse
+      - STYLE_ANALYSIS_URL=http://style-analysis:8000/analyze/
+      - SOUND_GENERATION_URL=http://sound-generation:8000/generate
+      - MIXING_MASTERING_URL=http://mixing-mastering:8000/process
+    depends_on:
+      - job-orchestrator-service
+
+# Defines the shared network for all services.
+networks:
+  ai_music_net:
+    driver: bridge
+
+# Defines named volumes for persistent data.
+volumes:
+  redis_data:
+    driver: local
+  stems_data:
+    # Map this volume to a local directory for easy access and integration testing.
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/output/stems

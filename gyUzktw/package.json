@@ -1,0 +1,15 @@
+{
+  "name": "ai-music-production-assistant-react-ui",
+  "version": "1.0.0",
+  "description": "A React frontend for the AI Music Production Assistant.",
+  "author": "Neo",
+  "license": "UNLICENSED",
+  "private": true,
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "scripts": {
+    "start": "echo \"This project is served statically. Use a simple HTTP server or the provided Dockerfile.\" && exit 1"
+  }
+}

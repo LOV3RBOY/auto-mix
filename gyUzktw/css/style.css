@@ -1,0 +1,76 @@
+:root {
+    --color-background: #121212;
+    --color-surface: #1E1E1E;
+    --color-primary-text: #E0E0E0;
+    --color-secondary-text: #A0A0A0;
+    --color-border: #333333;
+    --color-accent: #00AFFF;
+    --color-accent-hover: #0099e6;
+    --color-success: #10B981;
+    --color-error: #EF4444;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--color-background);
+}
+
+.bg-accent { background-color: var(--color-accent); }
+.bg-accent-hover:hover { background-color: var(--color-accent-hover); }
+.text-accent { color: var(--color-accent); }
+.ring-accent:focus { --tw-ring-color: var(--color-accent); }
+.border-accent { border-color: var(--color-accent); }
+
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--color-surface);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #4A4A4A;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+.progress-bar-container {
+    background-color: #333;
+    border-radius: 9999px;
+    overflow: hidden;
+    height: 8px;
+}
+
+.progress-bar {
+    background-color: var(--color-accent);
+    height: 100%;
+    transition: width 0.5s ease-in-out;
+    border-radius: 9999px;
+}
+
+.job-card {
+    transition: background-color 0.3s, border-color 0.3s;
+}
+
+.job-card:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: #444;
+}
+
+.animate-pulse-slow {
+    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: .7;
+  }
+}
