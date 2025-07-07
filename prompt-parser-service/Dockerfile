@@ -19,12 +19,15 @@ RUN apt-get update && apt-get install -y build-essential && \
 # Copy only the requirements file to leverage Docker cache
 COPY requirements.txt .
 
-# Install python packages into a "wheels" directory
-RUN pip wheel --no-cache-dir --wheel-dir /usr/src/app/wheels -r requirements.txt
+# Install python packages from requirements to make the 'transformers' library available.
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Download the NER model into the specified cache directory.
+# Now that packages are installed, download the NER model into the specified cache directory.
 # This command runs a short Python script to pre-download the model.
 RUN python -c "from transformers import pipeline; pipeline('ner', model='dslim/bert-base-ner')"
+
+# Create wheel files for the much smaller runtime stage.
+RUN pip wheel --no-cache-dir --wheel-dir /usr/src/app/wheels -r requirements.txt
 
 # --- Stage 2: Runtime ---
 # This stage creates the final, lean production image.
